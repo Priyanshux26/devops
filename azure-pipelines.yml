@@ -1,0 +1,30 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- checkout: self
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '14.x'
+  displayName: 'Install Node.js 14'
+
+- script: |
+    cd backend
+    npm install
+  displayName: 'Install backend dependencies'
+
+- script: |
+    cd backend
+    npm start &
+    sleep 5
+    curl http://localhost:3000/ping
+  displayName: 'Start backend and test endpoint'
+
+- script: |
+    echo "Frontend Files:"
+    ls -R frontend
+  displayName: 'List frontend files'
