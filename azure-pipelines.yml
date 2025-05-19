@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  name: devops # Replace with your self-hosted agent pool name
+  name: devops  # Replace with your Windows self-hosted agent pool name
 
 steps:
 - checkout: self
@@ -12,19 +12,19 @@ steps:
     versionSpec: '14.x'
   displayName: 'Install Node.js 14'
 
-- script: |
+- powershell: |
     cd backend
     npm install
   displayName: 'Install backend dependencies'
 
-- script: |
+- powershell: |
     cd backend
-    npm start &
-    sleep 5
-    curl http://localhost:3000/ping
+    Start-Process npm -ArgumentList 'start' -NoNewWindow
+    Start-Sleep -Seconds 5
+    Invoke-WebRequest -Uri http://localhost:3000/ping -UseBasicParsing
   displayName: 'Start backend and test endpoint'
 
-- script: |
-    echo "Frontend Files:"
-    ls -R frontend
+- powershell: |
+    Write-Host "Frontend Files:"
+    Get-ChildItem -Recurse frontend
   displayName: 'List frontend files'
