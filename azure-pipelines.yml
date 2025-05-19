@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  name: YourSelfHostedPoolName  # Replace with your self-hosted agent pool name
+  name: devops # Replace with your self-hosted agent pool name
 
 steps:
 - checkout: self
