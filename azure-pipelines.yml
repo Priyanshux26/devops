@@ -2,29 +2,61 @@ trigger:
 - main
 
 pool:
-  name: devops  # Replace with your Windows self-hosted agent pool name
+  name: devops  # Your self-hosted Windows agent pool
+
+variables:
+  SONARQUBE_TOKEN: $squ_0f16c2b4162e8dc84bdd4f2d6e760d9679226518 # Optional if using service connection only
 
 steps:
 - checkout: self
 
+# Install Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '14.x'
   displayName: 'Install Node.js 14'
 
+# Prepare SonarQube Analysis
+- task: SonarQubePrepare@5
+  inputs:
+    SonarQube: 'sonar'  # Name of your Azure DevOps SonarQube service connection
+    scannerMode: 'CLI'
+    configMode: 'manual'
+    cliProjectKey: 'devopsproject1'
+    cliProjectName: 'Expense Calculator'
+    cliSources: '.'
+
+# Install Backend Dependencies
 - powershell: |
     cd backend
     npm install
   displayName: 'Install backend dependencies'
 
+# Run Backend and Ping Test Endpoint
 - powershell: |
     cd backend
     Start-Process npm -ArgumentList 'start' -NoNewWindow
     Start-Sleep -Seconds 5
-    Invoke-WebRequest -Uri http://localhost:3000/ping -UseBasicParsing
+    try {
+      $response = Invoke-WebRequest -Uri http://localhost:3000/ping -UseBasicParsing
+      Write-Host "Ping Success: $($response.StatusCode)"
+    } catch {
+      Write-Host "Ping Failed: $_"
+    }
   displayName: 'Start backend and test endpoint'
 
+# List Frontend Files
 - powershell: |
     Write-Host "Frontend Files:"
     Get-ChildItem -Recurse frontend
   displayName: 'List frontend files'
+
+# Run SonarQube Analysis
+- task: SonarQubeAnalyze@5
+  displayName: 'Run SonarQube Analysis'
+
+# Publish SonarQube Report
+- task: SonarQubePublish@5
+  inputs:
+    pollingTimeoutSec: '300'
+  displayName: 'Publish SonarQube Results'
